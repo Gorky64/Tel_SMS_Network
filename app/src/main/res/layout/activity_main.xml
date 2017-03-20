@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.fs02.telefonijaisms.MainActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/etBroj"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Unesite broj"
+                android:inputType="phone"/>
+
+            <EditText
+                android:id="@+id/etPoruka"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Unesite tekst poruke"
+                android:inputType="textMultiLine"
+                android:lines="5" />
+
+            <Button
+                android:id="@+id/btnAppPoziv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="dial"
+                android:text="Aplikacija za pozive" />
+
+            <Button
+                android:id="@+id/btnZovi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="call"
+                android:text="Zovi" />
+
+            <Button
+                android:id="@+id/btnAppSMS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="prepareSMS"
+                android:text="Pripremi SMS za slanje" />
+
+            <Button
+                android:id="@+id/btnSendSMS"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pošalji SMS"
+                android:onClick="sendSMS" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnInternet"
+                android:text="Dostupnost Interneta"
+                android:onClick="Internet"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btnStanje"
+                android:text="Stanje mreže"
+                android:onClick="pracenjeStanjaMreze" />
+        </LinearLayout>
+
+    </ScrollView>
+</LinearLayout>

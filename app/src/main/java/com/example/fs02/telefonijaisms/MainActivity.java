@@ -1,0 +1,177 @@
+package com.example.fs02.telefonijaisms;
+
+import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.telephony.SmsManager;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
+
+
+public class MainActivity extends AppCompatActivity {
+    private static final String TEL_PREFIX = "tel:";
+    private EditText etBroj;
+    private String telBroj;
+    private EditText etPoruka;
+    private final static int REQUEST_PERMISSION = 1;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initWidgets();
+    }
+
+    private void initWidgets() {
+        etBroj = (EditText) findViewById(R.id.etBroj);
+        etPoruka = (EditText) findViewById(R.id.etPoruka);
+
+    }
+
+    //poziva aplikaciju za pozive kad je broj unesen
+    public void dial(View view) {
+        if (hasNumber()) {
+            telBroj = TEL_PREFIX + etBroj.getText().toString();
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse(telBroj));
+            startActivity(intent);
+        }
+    }
+
+    private boolean hasNumber() {
+        if (etBroj.getText().length() == 0) {
+            Toast.makeText(this, R.string.unesite_broj, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+    //zvanje broja direktno iz aplikacije
+    public void call(View view) {
+        if (hasNumber()) {
+
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_PERMISSION);
+
+            } else {
+                telBroj = TEL_PREFIX + etBroj.getText().toString();
+                Intent intent = new Intent(Intent.ACTION_CALL);
+                intent.setData(Uri.parse(telBroj));
+                if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                    startActivity(intent);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+
+        switch (requestCode) {
+            case 10:
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent callIntent = new Intent(Intent.ACTION_CALL);
+                    callIntent.setData(Uri.parse(telBroj));
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                        startActivity(callIntent);
+                    }
+                } else {
+                    Toast.makeText(this, "You Deny permission", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+        }
+    }
+
+    //poziva aplikaciju za SMS kad je broj unesen
+    public void prepareSMS(View view) {
+        if (hasNumber() && hasText()) {
+            Intent intent3 = new Intent(Intent.ACTION_VIEW);
+            intent3.putExtra("address", etBroj.getText().toString());
+            intent3.putExtra("sms_body", etPoruka.getText().toString());
+            intent3.setType("vnd.android-dir/mms-sms");
+            startActivity(intent3);
+        }
+    }
+
+    private boolean hasText() {
+        if (etPoruka.getText().length() == 0) {
+            Toast.makeText(this, R.string.unesite_tekst_poruke, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+    //slanje SMSa iz same aplikacije
+    public void sendSMS(View view) {
+        if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED) {
+            requestPermissions(new String[]{Manifest.permission.SEND_SMS}, 1);
+        }
+        if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Permission passed", Toast.LENGTH_SHORT).show();
+            SmsManager sms = SmsManager.getDefault();
+            sms.sendTextMessage(etBroj.getText().toString(), null, etPoruka.getText().toString(), null, null);
+        }
+    }
+
+    //Network Checks
+
+    public void Internet(View view) {
+        //network manager
+        ConnectivityManager mobilnaMreza = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        //get active network
+        NetworkInfo aktivnaMreza = mobilnaMreza.getActiveNetworkInfo();
+        if (aktivnaMreza != null && aktivnaMreza.getState() == NetworkInfo.State.CONNECTED) {
+            //checks the active network type
+            int vrstaMreze = aktivnaMreza.getType();
+            switch (vrstaMreze) {
+                //mobile network
+                case (ConnectivityManager.TYPE_MOBILE):
+                    Toast.makeText(getApplicationContext(), "Aktivna je mobilna mreža", Toast.LENGTH_SHORT).show();
+                    //checks if roaming is on
+                    if (aktivnaMreza.isRoaming()) {
+                    }
+                    break;
+                //wireless connection
+                case (ConnectivityManager.TYPE_WIFI):
+                    Toast.makeText(getApplicationContext(), "Aktivna je bežična mreža", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        } else {
+
+            Toast.makeText(getApplicationContext(), "Internet veza nedostupna", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    //tracks connection
+    public void pracenjeStanjaMreze(View view) {
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Bundle paket = intent.getExtras();
+                if (paket.getBoolean(ConnectivityManager.EXTRA_IS_FAILOVER)) {
+                    //network issues
+                    Toast.makeText(getApplicationContext(),"Problemi s mrežom",Toast.LENGTH_SHORT).show();
+                }
+                if (paket.getBoolean(ConnectivityManager.EXTRA_NO_CONNECTIVITY)) {
+                    //no network connection
+                    Toast.makeText(getApplicationContext(),"Uređaj nije spojen niti na jednu mrezu",Toast.LENGTH_SHORT).show();
+                }
+                if (paket.getStringArrayList(ConnectivityManager.EXTRA_REASON) != null) {
+                    //network issues
+                    Toast.makeText(getApplicationContext(),"Problem s mrežom",Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        }, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+    }
+}
